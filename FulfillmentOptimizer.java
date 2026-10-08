@@ -1,7 +1,7 @@
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FulfillmentOptimizerLex {
+public class FulfillmentOptimizer {
 
     // --- DATA MODELS ---
     public record FulfillmentCenter(String fc, String location, Map<String, Integer> inventory) {}
@@ -55,16 +55,16 @@ public class FulfillmentOptimizerLex {
 
         int handlingFee = 3;
 
-        // Run Baseline vs. Lexicographical Approach
-        ExecutionMetrics naiveMetrics = runNaiveStrategy(cloneFCs(fcs), rates, orders, handlingFee);
-        ExecutionMetrics lexicographicalMetrics = runLexicographicalStrategy(cloneFCs(fcs), rates, orders, handlingFee);
+        // Run Baseline vs. Optmized Approach
+        ExecutionMetrics defaultMetrics = runDefaultStrategy(cloneFCs(fcs), rates, orders, handlingFee);
+        ExecutionMetrics optimizedMetrics = runOptimizedStrategy(cloneFCs(fcs), rates, orders, handlingFee);
 
         // Display Comparison Results
-        printComparisonTable(naiveMetrics, lexicographicalMetrics);
+        printComparisonTable(defaultMetrics, optimizedMetrics);
     }
 
-    // --- LEXICOGRAPHICAL MULTI-STAGE STRATEGY ---
-    private static ExecutionMetrics runLexicographicalStrategy(
+    
+    private static ExecutionMetrics runOptimizedStrategy(
             List<FulfillmentCenter> fcs,
             Map<String, Map<String, ShippingOption>> rates,
             List<Order> orders,
@@ -98,7 +98,7 @@ public class FulfillmentOptimizerLex {
                 int minCost = Integer.MAX_VALUE;
                 int minDays = Integer.MAX_VALUE;
 
-                // Lexicographical Evaluation across FCs
+                
                 for (FulfillmentCenter fc : fcs) {
                     ShippingOption opt = rates.get(shipTo).get(fc.fc());
 
@@ -112,7 +112,7 @@ public class FulfillmentOptimizerLex {
 
                     if (coverage == 0) continue;
 
-                    // LEXICOGRAPHICAL COMPARATOR:
+                    
                     // Priority 1: Maximize Coverage (Minimizes Shipments / Handling Fees)
                     // Priority 2: Minimize Base Shipping Cost
                     // Priority 3: Minimize Delivery Days
@@ -164,12 +164,12 @@ public class FulfillmentOptimizerLex {
             }
         }
 
-        return new ExecutionMetrics("Lexicographical Approach", totalCost, totalShipments,
+        return new ExecutionMetrics("Optmized Approach", totalCost, totalShipments,
                 (double) totalDays / Math.max(1, totalShipments), splitPackages);
     }
 
-    // --- NAIVE STRATEGY ---
-    private static ExecutionMetrics runNaiveStrategy(
+    // --- Default STRATEGY ---
+    private static ExecutionMetrics runDefaultStrategy(
             List<FulfillmentCenter> fcs,
             Map<String, Map<String, ShippingOption>> rates,
             List<Order> orders,
@@ -214,7 +214,7 @@ public class FulfillmentOptimizerLex {
             }
         }
 
-        return new ExecutionMetrics("Naive Baseline", totalCost, totalShipments,
+        return new ExecutionMetrics("Default Baseline", totalCost, totalShipments,
                 (double) totalDays / Math.max(1, totalShipments), splitPackages);
     }
 
@@ -224,15 +224,15 @@ public class FulfillmentOptimizerLex {
             .collect(Collectors.toList());
     }
 
-    private static void printComparisonTable(ExecutionMetrics naive, ExecutionMetrics lex) {
+    private static void printComparisonTable(ExecutionMetrics basic, ExecutionMetrics optimized) {
         System.out.println("\n=========================== FULFILLMENT PLAN METRICS ===========================");
-        System.out.printf("%-28s | %-18s | %-24s | %-12s%n", "Metric", "Naive Baseline", "Lexicographical Approach", "Delta");
+        System.out.printf("%-28s | %-18s | %-24s | %-12s%n", "Metric", "default Baseline", "Optmized Approach", "Delta");
         System.out.println("------------------------------------------------------------------------------------------------");
-        System.out.printf("%-28s | $%-17.2f | $%-23.2f | %-12s%n", "Total Financial Cost", naive.totalCost(), lex.totalCost(), 
-                          String.format("%.1f%%", ((lex.totalCost() - naive.totalCost()) / naive.totalCost()) * 100));
-        System.out.printf("%-28s | %-18d | %-24d | %-12d%n", "Total Package Shipments", naive.totalShipments(), lex.totalShipments(), lex.totalShipments() - naive.totalShipments());
-        System.out.printf("%-28s | %-18d | %-24d | %-12d%n", "Extra Split Packages", naive.totalSplitPackages(), lex.totalSplitPackages(), lex.totalSplitPackages() - naive.totalSplitPackages());
-        System.out.printf("%-28s | %-18.2f | %-24.2f | %-12.2f%n", "Avg Delivery Time (Days)", naive.avgDeliveryDays(), lex.avgDeliveryDays(), lex.avgDeliveryDays() - naive.avgDeliveryDays());
+        System.out.printf("%-28s | $%-17.2f | $%-23.2f | %-12s%n", "Total Financial Cost", basic.totalCost(), optimized.totalCost(), 
+                          String.format("%.1f%%", ((optimized.totalCost() - basic.totalCost()) / basic.totalCost()) * 100));
+        System.out.printf("%-28s | %-18d | %-24d | %-12d%n", "Total Package Shipments", basic.totalShipments(), optimized.totalShipments(), optimized.totalShipments() - basic.totalShipments());
+        System.out.printf("%-28s | %-18d | %-24d | %-12d%n", "Extra Split Packages", basic.totalSplitPackages(), optimized.totalSplitPackages(), optimized.totalSplitPackages() - basic.totalSplitPackages());
+        System.out.printf("%-28s | %-18.2f | %-24.2f | %-12.2f%n", "Avg Delivery Time (Days)", basic.avgDeliveryDays(), optimized.avgDeliveryDays(), optimized.avgDeliveryDays() - basic.avgDeliveryDays());
         System.out.println("================================================================================================\n");
     }
 }
